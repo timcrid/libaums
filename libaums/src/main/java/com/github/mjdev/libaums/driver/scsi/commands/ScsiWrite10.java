@@ -46,7 +46,7 @@ public class ScsiWrite10 extends CommandBlockWrapper {
      * Be sure to call {@link #init(int, int, int)} before transfering command to device.
      */
     public ScsiWrite10() {
-        super(0, Direction.OUT, (byte) 0, LENGTH);
+        super(0, Direction.OUT, LENGTH);
     }
 
 	/**
@@ -60,7 +60,7 @@ public class ScsiWrite10 extends CommandBlockWrapper {
 	 *            The block size of the mass storage device.
 	 */
 	public ScsiWrite10(int blockAddress, int transferBytes, int blockSize) {
-		super(transferBytes, Direction.OUT, (byte) 0, LENGTH);
+		super(transferBytes, Direction.OUT, LENGTH);
 		init(blockAddress, transferBytes, blockSize);
 	}
 

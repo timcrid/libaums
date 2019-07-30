@@ -37,7 +37,7 @@ public class ScsiInquiry extends CommandBlockWrapper {
 	private byte allocationLength;
 
 	public ScsiInquiry(byte allocationLength) {
-		super(allocationLength, Direction.IN, (byte) 0, LENGTH);
+		super(allocationLength, Direction.IN, LENGTH);
 
         this.allocationLength = allocationLength;
 	}

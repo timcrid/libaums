@@ -34,7 +34,7 @@ public class ScsiReadCapacity extends CommandBlockWrapper {
 	private static final byte OPCODE = 0x25;
 
 	public ScsiReadCapacity() {
-		super(RESPONSE_LENGTH, Direction.IN, (byte) 0, LENGTH);
+		super(RESPONSE_LENGTH, Direction.IN, LENGTH);
 	}
 
 	@Override

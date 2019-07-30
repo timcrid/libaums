@@ -46,7 +46,7 @@ public class ScsiRead10 extends CommandBlockWrapper {
 	 * Be sure to call {@link #init(int, int, int)} before transfering command to device.
 	 */
 	public ScsiRead10() {
-		super(0, Direction.IN, (byte) 0, LENGTH);
+		super(0, Direction.IN, LENGTH);
 	}
 
 	/**
@@ -60,7 +60,7 @@ public class ScsiRead10 extends CommandBlockWrapper {
 	 *            The block size of the mass storage device.
 	 */
 	public ScsiRead10(int blockAddress, int transferBytes, int blockSize) {
-		super(transferBytes, Direction.IN, (byte) 0, LENGTH);
+		super(transferBytes, Direction.IN, LENGTH);
 		init(blockAddress, transferBytes, blockSize);
 	}
 

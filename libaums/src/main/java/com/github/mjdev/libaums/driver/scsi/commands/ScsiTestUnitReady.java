@@ -37,7 +37,7 @@ public class ScsiTestUnitReady extends CommandBlockWrapper {
 	private static final byte OPCODE = 0x0;
 
 	public ScsiTestUnitReady() {
-		super(0, Direction.NONE, (byte) 0, LENGTH);
+		super(0, Direction.NONE, LENGTH);
 	}
 
 	@Override

@@ -35,6 +35,7 @@ import android.util.Log;
 
 import com.github.mjdev.libaums.driver.BlockDeviceDriver;
 import com.github.mjdev.libaums.driver.BlockDeviceDriverFactory;
+import com.github.mjdev.libaums.driver.scsi.commands.CommandBlockWrapper;
 import com.github.mjdev.libaums.partition.Partition;
 import com.github.mjdev.libaums.partition.PartitionTable;
 import com.github.mjdev.libaums.partition.PartitionTableEntry;
@@ -228,6 +229,7 @@ public class UsbMassStorageDevice {
 		byte[] b = new byte[1];
 		deviceConnection.controlTransfer(0b10100001, 0b11111110, 0, usbInterface.getId(), b, 1, 5000);
 		Log.i(TAG, "MAX LUN " + (int)b[0]);
+		CommandBlockWrapper.setLun(b[0]);
 		blockDevice = BlockDeviceDriverFactory.createBlockDevice(communication);
 		blockDevice.init();
 		partitionTable = PartitionTableFactory.createPartitionTable(blockDevice);

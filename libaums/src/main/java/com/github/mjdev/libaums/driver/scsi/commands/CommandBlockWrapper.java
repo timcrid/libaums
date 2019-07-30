@@ -25,7 +25,7 @@ import java.nio.ByteOrder;
  * around a specific SCSI command in the SCSI transparent command set standard.
  * <p>
  * Every SCSI command shall extend this class, call the constructor
- * {@link #CommandBlockWrapper(int, Direction, byte, byte)} with the desired
+ * {@link #CommandBlockWrapper(int, Direction, byte)} with the desired
  * information. When transmitting the command, the
  * {@link #serialize(ByteBuffer)} method has to be called!
  * 
@@ -60,9 +60,10 @@ public abstract class CommandBlockWrapper {
 	private int dCbwTag;
 	protected int dCbwDataTransferLength;
 	private byte bmCbwFlags;
-	private byte bCbwLun;
 	private byte bCbwcbLength;
 	private Direction direction;
+
+	private static byte bCbwLun;
 
 	/**
 	 * Constructs a new command block wrapper with the given information which
@@ -76,18 +77,15 @@ public abstract class CommandBlockWrapper {
 	 *            If there is no data phase it should be
 	 *            {@link com.github.mjdev.libaums.driver.scsi.commands.CommandBlockWrapper.Direction #NONE
 	 *            NONE}
-	 * @param lun
-	 *            The logical unit number the command is directed to.
 	 * @param cbwcbLength
 	 *            The length in bytes of the scsi command.
 	 */
-	protected CommandBlockWrapper(int transferLength, Direction direction, byte lun,
-			byte cbwcbLength) {
+	protected CommandBlockWrapper(int transferLength, Direction direction,
+								  byte cbwcbLength) {
 		dCbwDataTransferLength = transferLength;
 		this.direction = direction;
 		if (direction == Direction.IN)
 			bmCbwFlags = (byte) 0x80;
-		bCbwLun = lun;
 		bCbwcbLength = cbwcbLength;
 	}
 
@@ -157,4 +155,13 @@ public abstract class CommandBlockWrapper {
 		return direction;
 	}
 
+	/**
+	 * Set the logical unit number where the commands are directed to.
+	 *
+	 * @param lun The logical unit number
+ 	 */
+	public static void setLun(byte lun)
+	{
+		bCbwLun = lun;
+	}
 }

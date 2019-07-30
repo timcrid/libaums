@@ -33,7 +33,7 @@ public class ScsiRequestSense extends CommandBlockWrapper {
     private byte allocationLength;
 
     public ScsiRequestSense(byte allocationLength) {
-        super(0, Direction.NONE, (byte) 0, LENGTH);
+        super(0, Direction.NONE, LENGTH);
         this.allocationLength = allocationLength;
     }
 
