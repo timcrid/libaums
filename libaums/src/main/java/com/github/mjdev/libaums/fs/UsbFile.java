@@ -251,5 +251,5 @@ public interface UsbFile extends Closeable {
 	 *
 	 * @return True if the current directory is empty, false if not
 	 */
-	boolean isEmpty();
+	boolean isEmpty() throws IOException;
 }

@@ -608,7 +608,8 @@ public class FatDirectory extends AbstractUsbFile {
 		chain.setLength(0);
 	}
 
-	public boolean isEmpty(){
-		return (entries.size() == 0);
+	public boolean isEmpty() throws IOException {
+		init();
+		return entries.size() <= 2;
 	}
 }
