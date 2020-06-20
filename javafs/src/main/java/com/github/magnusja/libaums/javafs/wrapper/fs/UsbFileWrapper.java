@@ -229,4 +229,18 @@ public class UsbFileWrapper extends AbstractUsbFile {
             return false;
         }
     }
+
+    @Override
+    public boolean isEmpty() throws IOException {
+        if (dir == null) {
+            throw new UnsupportedOperationException("This is a file!");
+        }
+
+        try {
+            return !dir.iterator().hasNext();
+        } catch (IOException e) {
+            Log.d(TAG, "error getting iterator from directory", e);
+            return false;
+        }
+    }
 }

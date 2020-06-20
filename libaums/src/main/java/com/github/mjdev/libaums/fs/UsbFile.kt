@@ -250,6 +250,9 @@ interface UsbFile : Closeable {
     @Throws(IOException::class)
     fun delete()
 
+    @Throws(IOException::class)
+    fun isEmpty(): Boolean
+
     companion object {
         const val separator = "/"
     }

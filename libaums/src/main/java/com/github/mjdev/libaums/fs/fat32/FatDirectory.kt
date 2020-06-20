@@ -528,6 +528,12 @@ internal constructor(
         chain.length = 0
     }
 
+    @Throws(IOException::class)
+    override fun isEmpty(): Boolean {
+        init()
+        return (entries!!.size <= 2)
+    }
+
     companion object {
 
         private val TAG = FatDirectory::class.java.simpleName

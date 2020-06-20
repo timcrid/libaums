@@ -153,4 +153,8 @@ internal constructor(private val blockDevice: BlockDeviceDriver, private val fat
         chain.length = 0
     }
 
+    @Throws(IOException::class)
+    override fun isEmpty(): Boolean {
+        throw UnsupportedOperationException("This is a file!")
+    }
 }
