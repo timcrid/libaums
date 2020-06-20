@@ -1,7 +1,7 @@
 libaums
 =======
-[![Javadocs](https://www.javadoc.io/badge/com.github.mjdev/libaums.svg)](https://www.javadoc.io/doc/com.github.mjdev/libaums)
-[ ![Build Status](https://travis-ci.org/magnusja/libaums.svg?branch=develop)](https://travis-ci.org/magnusja/libaums)[ ![codecov](https://codecov.io/gh/magnusja/libaums/branch/develop/graph/badge.svg)](https://codecov.io/gh/magnusja/libaums)[ ![Download](https://api.bintray.com/packages/mjdev/maven/libaums/images/download.svg) ](https://bintray.com/mjdev/maven/libaums/_latestVersion)
+[![Javadocs](https://www.javadoc.io/badge/me.jahnen/libaums.svg)](https://www.javadoc.io/doc/me.jahnen/libaums)
+[ ![Build Status](https://travis-ci.org/magnusja/libaums.svg?branch=develop)](https://travis-ci.org/magnusja/libaums)[ ![codecov](https://codecov.io/gh/magnusja/libaums/branch/develop/graph/badge.svg)](https://codecov.io/gh/magnusja/libaums)[ ![Codacy Badge](https://api.codacy.com/project/badge/Grade/31124a2747de41b49c040b9f7979c2a6)](https://www.codacy.com/manual/magnusja/libaums?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=magnusja/libaums&amp;utm_campaign=Badge_Grade)[ ![Download](https://api.bintray.com/packages/magnusja/maven/libaums/images/download.svg) ](https://bintray.com/magnusja/maven/libaums/_latestVersion)
 [ ![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/libaums)
 
 A library to access USB mass storage devices (pen drives, external HDDs, card readers) using the Android USB Host API. Currently it supports the SCSI command set and the FAT32 file system.
@@ -13,18 +13,18 @@ A library to access USB mass storage devices (pen drives, external HDDs, card re
 The library can be included into your project like this:
 
 ```ruby
-compile 'com.github.mjdev:libaums:0.7.0'
+implementation 'me.jahnen:libaums:0.7.5'
 ```
 
 If you need the HTTP or the storage provider module:
 
 ```ruby
-compile 'com.github.mjdev:libaums-httpserver:0.5.3'
-compile 'com.github.mjdev:libaums-storageprovider:0.5.1'
+implementation 'me.jahnen:libaums-httpserver:0.5.3'
+implementation 'me.jahnen:libaums-storageprovider:0.5.1'
 ```
 
 ### Basics
-#### Getting mass storage devices
+#### Query available mass storage devices
 
 #### Java
 
@@ -155,32 +155,24 @@ InputStream is = UsbFileStreamFactory.createBufferedInputStream(file, currentFs)
 device.close();
 ```
 
-#### Provide access to external apps
+#### Troubleshooting
 
-Usually third party apps do not have access to the files on a mass storage device if the Android system does mount the device or this app integrates this library itself. To solve this issue there are two additional modules to provide access to other app. One uses the Storage Access Framework feature of Android (API level >= 19) and the other one spins up an HTTP server to allow downloading or streaming.
+If you get the following error fairly often (mostly under Android 9.0 Pie):
 
-### Storage Access Framework
-[![Javadocs](https://www.javadoc.io/badge/com.github.mjdev/libaums-storageprovider.svg)](https://www.javadoc.io/doc/com.github.mjdev/libaums-storageprovider)
-
-To learn more about this visit: https://developer.android.com/guide/topics/providers/document-provider.html
-
-To integrate this module in your app the only thing you have to do is add the definition in your AndroidManifest.xml.
-
-```xml
-<provider
-    android:name="com.github.mjdev.libaums.storageprovider.UsbDocumentProvider"
-    android:authorities="com.github.mjdev.libaums.storageprovider.documents"
-    android:exported="true"
-    android:grantUriPermissions="true"
-    android:permission="android.permission.MANAGE_DOCUMENTS"
-    android:enabled="@bool/isAtLeastKitKat">
-    <intent-filter>
-        <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
-    </intent-filter>
-</provider>
+```
+java.io.IOException: Could not write to device, result == -1 errno 0 null
 ```
 
-After that apps using the Storage Access Framework will be able to access the files of the USB mass storage device.
+or something similar, you might want to try the [libusb module](https://github.com/magnusja/libaums/tree/develop/libusbcommunication). This uses, instead of the Android USB host API, the [libusb](https://github.com/libusb/libusb) library for low level communication with the USB mass storage device. 
+
+see discussions: https://github.com/magnusja/libaums/issues/209 https://github.com/magnusja/libaums/issues/237 https://github.com/magnusja/libaums/pull/242
+
+__Note__, that libusb is licensed under LGPL, which is different from the license this project is licensed under! This might come with some drawbacks or extra work for closed source applications, see here: https://xebia.com/blog/the-lgpl-on-android/
+
+## Provide access to external apps
+
+Usually third party apps do not have access to the files on a mass storage device if the Android system does mount (this is usually supported on newer devices, back in 2014 there was no support for that) the device or this app integrates this library itself. To solve this issue there are two additional modules to provide access to other app. One uses the Storage Access Framework feature of Android (API level >= 19) and the other one spins up an HTTP server to allow downloading or streaming of videos or images for instance.
+
 
 ### HTTP server
 [![Javadocs](https://www.javadoc.io/badge/com.github.mjdev/libaums-httpserver.svg)](https://www.javadoc.io/doc/com.github.mjdev/libaums-httpserver)
@@ -301,6 +293,30 @@ override protected fun onStart() {
 See the example app for additional details on that.
 
 
+### Storage Access Framework
+[![Javadocs](https://www.javadoc.io/badge/com.github.mjdev/libaums-storageprovider.svg)](https://www.javadoc.io/doc/com.github.mjdev/libaums-storageprovider)
+
+To learn more about this visit: https://developer.android.com/guide/topics/providers/document-provider.html
+
+To integrate this module in your app the only thing you have to do is add the definition in your AndroidManifest.xml.
+
+```xml
+<provider
+    android:name="com.github.mjdev.libaums.storageprovider.UsbDocumentProvider"
+    android:authorities="com.github.mjdev.libaums.storageprovider.documents"
+    android:exported="true"
+    android:grantUriPermissions="true"
+    android:permission="android.permission.MANAGE_DOCUMENTS"
+    android:enabled="@bool/isAtLeastKitKat">
+    <intent-filter>
+        <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+    </intent-filter>
+</provider>
+```
+
+After that apps using the Storage Access Framework will be able to access the files of the USB mass storage device.
+
+
 #### Hints
 
 1. In the `app/` directory you can find an example application using the library.
@@ -310,17 +326,15 @@ See the example app for additional details on that.
 
 ##### Thesis
 
+The library was developed by Mr. Jahnen as part of his bachelor's thesis in 2014. It's a sub-topic of the research topic "Secure Copy Protection for Mobile Apps" by Mr. Kannengießer. The full thesis document can be downloaded [here](https://www.os.in.tum.de/fileadmin/w00bdp/www/Lehre/Abschlussarbeiten/Jahnen-thesis.pdf).
+
+
 Libaums - Library to access USB Mass Storage Devices  
-License: Apache 2.0 (see license.txt for details)
-Author: Magnus Jahnen, jahnen at in.tum.de  
+License: Apache 2.0 (see license.txt for details)   
+Author: Magnus Jahnen, github@mgns.tech 
 Advisor: Nils Kannengießer, nils.kannengiesser at tum.de  
 Supervisor: Prof. Uwe Baumgarten, baumgaru at in.tum.de  
-
 
 Technische Universität München (TUM)  
 Lehrstuhl/Fachgebiet für Betriebssysteme  
 www.os.in.tum.de  
-
-The library was developed by Mr. Jahnen as part of his bachelor's thesis in 2014. It's a sub-topic of the research topic "Secure Copy Protection for Mobile Apps" by Mr. Kannengießer. The full thesis document can be downloaded [here](https://www.os.in.tum.de/fileadmin/w00bdp/www/Lehre/Abschlussarbeiten/Jahnen-thesis.pdf).
-
-We would appreciate an information email, when you plan to use the library in your projects.

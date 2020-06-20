@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2014 mjahnen <jahnen@in.tum.de>
+ * (C) Copyright 2014 mjahnen <github@mgns.tech>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 package com.github.mjdev.libaums.driver.scsi
 
 import android.util.Log
+import com.github.mjdev.libaums.ErrNo
 import com.github.mjdev.libaums.driver.BlockDeviceDriver
 import com.github.mjdev.libaums.driver.scsi.commands.*
 import com.github.mjdev.libaums.driver.scsi.commands.CommandBlockWrapper.Direction
@@ -47,6 +48,8 @@ class ScsiBlockDevice(private val usbCommunication: UsbCommunication, private va
     private val writeCommand = ScsiWrite10(lun=lun)
     private val readCommand = ScsiRead10(lun=lun)
     private val csw = CommandStatusWrapper()
+
+    private var cbwTagCounter = 0
 
     /**
      * The size of the block device, in blocks of [blockSize] bytes,
@@ -135,8 +138,56 @@ class ScsiBlockDevice(private val usbCommunication: UsbCommunication, private va
      */
     @Throws(IOException::class)
     private fun transferCommand(command: CommandBlockWrapper, inBuffer: ByteBuffer): Boolean {
+        for(i in 0..MAX_RECOVERY_ATTEMPTS) {
+            try {
+                return transferOneCommand(command, inBuffer)
+            } catch(e: IOException) {
+                Log.e(TAG, "Error transferring command; errno ${ErrNo.errno} ${ErrNo.errstr}")
+
+                // Try alternately to clear halt and reset device until something happens
+                when {
+                    i == MAX_RECOVERY_ATTEMPTS -> {
+                        Log.d(TAG, "Giving up")
+                        throw e
+                    }
+                    i % 2 == 0 -> {
+                        Log.d(TAG, "Reset bulk-only mass storage")
+                        bulkOnlyMassStorageReset()
+                        Log.d(TAG, "Trying to clear halt on both endpoints")
+                        usbCommunication.clearFeatureHalt(usbCommunication.inEndpoint)
+                        usbCommunication.clearFeatureHalt(usbCommunication.outEndpoint)
+                    }
+                    i % 2 == 1 -> {
+                        Log.d(TAG, "Trying to reset the device")
+                        usbCommunication.resetDevice()
+                    }
+                }
+
+                Thread.sleep(500)
+            }
+        }
+
+        throw IllegalStateException("This should never happen.")
+    }
+
+    private fun bulkOnlyMassStorageReset() {
+        Log.w(TAG, "sending bulk only mass storage request")
+        val bArr = ByteArray(2)
+        // REQUEST_BULK_ONLY_MASS_STORAGE_RESET = 255
+        // REQUEST_TYPE_BULK_ONLY_MASS_STORAGE_RESET = 33
+        val transferred: Int = usbCommunication.controlTransfer(33, 255, 0, usbCommunication.usbInterface.id, bArr, 0)
+        if (transferred == -1) {
+            throw IOException("bulk only mass storage reset failed!")
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun transferOneCommand(command: CommandBlockWrapper, inBuffer: ByteBuffer): Boolean {
         val outArray = outBuffer.array()
         Arrays.fill(outArray, 0.toByte())
+
+        command.dCbwTag = cbwTagCounter
+        cbwTagCounter++
 
         outBuffer.clear()
         command.serialize(outBuffer)
@@ -147,7 +198,7 @@ class ScsiBlockDevice(private val usbCommunication: UsbCommunication, private va
             throw IOException("Writing all bytes on command $command failed!")
         }
 
-        val transferLength = command.getdCbwDataTransferLength()
+        val transferLength = command.dCbwDataTransferLength
         var read = 0
         if (transferLength > 0) {
 
@@ -182,15 +233,15 @@ class ScsiBlockDevice(private val usbCommunication: UsbCommunication, private va
         cswBuffer.clear()
 
         csw.read(cswBuffer)
-        if (csw.getbCswStatus().toInt() != CommandStatusWrapper.COMMAND_PASSED) {
-            throw IOException("Unsuccessful Csw status: " + csw.getbCswStatus())
+        if (csw.bCswStatus.toInt() != CommandStatusWrapper.COMMAND_PASSED) {
+            throw IOException("Unsuccessful Csw status: " + csw.bCswStatus)
         }
 
-        if (csw.getdCswTag() != command.getdCbwTag()) {
+        if (csw.dCswTag != command.dCbwTag) {
             throw IOException("wrong csw tag!")
         }
 
-        return csw.getbCswStatus().toInt() == CommandStatusWrapper.COMMAND_PASSED
+        return csw.bCswStatus.toInt() == CommandStatusWrapper.COMMAND_PASSED
     }
 
     /**
@@ -202,9 +253,7 @@ class ScsiBlockDevice(private val usbCommunication: UsbCommunication, private va
     @Throws(IOException::class)
     override fun read(devOffset: Long, dest: ByteBuffer) {
         //long time = System.currentTimeMillis();
-        if (dest.remaining() % blockSize != 0) {
-            throw IllegalArgumentException("dest.remaining() must be multiple of blockSize!")
-        }
+        require(dest.remaining() % blockSize == 0) { "dest.remaining() must be multiple of blockSize!" }
 
         readCommand.init(devOffset.toInt(), dest.remaining(), blockSize)
         //Log.d(TAG, "reading: " + read);
@@ -224,9 +273,7 @@ class ScsiBlockDevice(private val usbCommunication: UsbCommunication, private va
     @Throws(IOException::class)
     override fun write(devOffset: Long, src: ByteBuffer) {
         //long time = System.currentTimeMillis();
-        if (src.remaining() % blockSize != 0) {
-            throw IllegalArgumentException("src.remaining() must be multiple of blockSize!")
-        }
+        require(src.remaining() % blockSize == 0) { "src.remaining() must be multiple of blockSize!" }
 
         writeCommand.init(devOffset.toInt(), src.remaining(), blockSize)
         //Log.d(TAG, "writing: " + write);
@@ -238,7 +285,7 @@ class ScsiBlockDevice(private val usbCommunication: UsbCommunication, private va
     }
 
     companion object {
-
+        private const val MAX_RECOVERY_ATTEMPTS = 20
         private val TAG = ScsiBlockDevice::class.java.simpleName
     }
 }

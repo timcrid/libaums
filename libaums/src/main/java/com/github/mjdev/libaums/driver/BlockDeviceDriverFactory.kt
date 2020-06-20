@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2014 mjahnen <jahnen@in.tum.de>
+ * (C) Copyright 2014 mjahnen <github@mgns.tech>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 
 package com.github.mjdev.libaums.driver
 
-import com.github.mjdev.libaums.usb.UsbCommunication
 import com.github.mjdev.libaums.driver.scsi.ScsiBlockDevice
+import com.github.mjdev.libaums.usb.UsbCommunication
 
 /**
  * A helper class to create different

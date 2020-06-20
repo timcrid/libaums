@@ -5,12 +5,14 @@ import com.github.mjdev.libaums.util.Pair;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.xenei.junit.contract.Contract;
 import org.xenei.junit.contract.ContractTest;
 import org.xenei.junit.contract.IProducer;
 
+import java.io.OutputStream;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -66,12 +68,36 @@ public class FileSystemTest {
 
     @ContractTest
     public void getOccupiedSpace() throws Exception {
+        newInstance();
         assertEquals(expectedValues.get("occupiedSpace").asLong(), fs.getOccupiedSpace());
+
+        UsbFile root = fs.getRootDirectory();
+        UsbFile file = root.createFile("bar.txt");
+
+        OutputStream os = new UsbFileOutputStream(file);
+        for(int i = 0; i < 4096; i++) {
+            os.write("hello".getBytes());
+        }
+        os.close();
+
+        assertNotEquals(expectedValues.get("occupiedSpace").asLong(), fs.getOccupiedSpace());
     }
 
     @ContractTest
     public void getFreeSpace() throws Exception {
+        newInstance();
         assertEquals(expectedValues.get("freeSpace").asLong(), fs.getFreeSpace());
+
+        UsbFile root = fs.getRootDirectory();
+        UsbFile file = root.createFile("bar2.txt");
+
+        OutputStream os = new UsbFileOutputStream(file);
+        for(int i = 0; i < 4096; i++) {
+            os.write("hello".getBytes());
+        }
+        os.close();
+
+        assertNotEquals(expectedValues.get("freeSpace").asLong(), fs.getFreeSpace());
     }
 
     @ContractTest

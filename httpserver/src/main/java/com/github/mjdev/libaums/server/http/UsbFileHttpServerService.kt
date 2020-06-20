@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2016 mjahnen <jahnen@in.tum.de>
+ * (C) Copyright 2016 mjahnen <github@mgns.tech>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,11 @@ import android.graphics.Color
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-
-import android.util.Log
-
 import com.github.mjdev.libaums.fs.UsbFile
 import com.github.mjdev.libaums.server.http.server.HttpServer
-
 import java.io.IOException
 
 /**

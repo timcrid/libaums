@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2014 mjahnen <jahnen@in.tum.de>
+ * (C) Copyright 2014 mjahnen <github@mgns.tech>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@
 
 package com.github.mjdev.libaums.partition.mbr
 
-import java.io.IOException
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.util.ArrayList
-import java.util.HashMap
-
 import android.util.Log
-
 import com.github.mjdev.libaums.partition.PartitionTable
 import com.github.mjdev.libaums.partition.PartitionTableEntry
 import com.github.mjdev.libaums.partition.PartitionTypes
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.*
 
 /**
  * This class represents the Master Boot Record (MBR), which is a partition

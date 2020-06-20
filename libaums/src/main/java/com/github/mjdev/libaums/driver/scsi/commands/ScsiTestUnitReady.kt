@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2014 mjahnen <jahnen@in.tum.de>
+ * (C) Copyright 2014 mjahnen <github@mgns.tech>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ class ScsiTestUnitReady(lun: Byte) : CommandBlockWrapper(0, Direction.NONE, lun,
 
     companion object {
 
-        private val LENGTH: Byte = 0x6
-        private val OPCODE: Byte = 0x0
+        private const val LENGTH: Byte = 0x6
+        private const val OPCODE: Byte = 0x0
     }
 
 }

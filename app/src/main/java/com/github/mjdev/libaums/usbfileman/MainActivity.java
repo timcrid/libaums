@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2014-2016 mjahnen <jahnen@in.tum.de>
+ * (C) Copyright 2014-2016 mjahnen <github@mgns.tech>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,6 @@
  */
 
 package com.github.mjdev.libaums.usbfileman;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.NoSuchElementException;
 
 import android.Manifest;
 import android.app.Activity;
@@ -54,15 +43,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.provider.OpenableColumns;
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
-import androidx.documentfile.provider.DocumentFile;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -79,6 +59,16 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
+import androidx.documentfile.provider.DocumentFile;
+import androidx.drawerlayout.widget.DrawerLayout;
+
 import com.github.magnusja.libaums.javafs.JavaFsFileSystemCreator;
 import com.github.mjdev.libaums.UsbMassStorageDevice;
 import com.github.mjdev.libaums.fs.FileSystem;
@@ -88,6 +78,20 @@ import com.github.mjdev.libaums.fs.UsbFileInputStream;
 import com.github.mjdev.libaums.fs.UsbFileStreamFactory;
 import com.github.mjdev.libaums.server.http.UsbFileHttpServerService;
 import com.github.mjdev.libaums.server.http.server.AsyncHttpServer;
+import com.github.mjdev.libaums.usb.UsbCommunicationFactory;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.NoSuchElementException;
+
+import me.jahnen.libaums.libusbcommunication.LibusbCommunicationCreator;
 
 /**
  * MainActivity of the demo application which shows the contents of the first
@@ -100,6 +104,8 @@ public class MainActivity extends AppCompatActivity implements OnItemClickListen
 
 	static {
 		FileSystemFactory.registerFileSystem(new JavaFsFileSystemCreator());
+        UsbCommunicationFactory.registerCommunication(new LibusbCommunicationCreator());
+        UsbCommunicationFactory.setUnderlyingUsbCommunication(UsbCommunicationFactory.UnderlyingUsbCommunication.OTHER);
 	}
 
 	/**

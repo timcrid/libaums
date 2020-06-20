@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2014 mjahnen <jahnen@in.tum.de>
+ * (C) Copyright 2014 mjahnen <github@mgns.tech>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@
 
 package com.github.mjdev.libaums.partition
 
-import java.io.IOException
-import java.util.ArrayList
-
 import com.github.mjdev.libaums.driver.BlockDeviceDriver
 import com.github.mjdev.libaums.partition.fs.FileSystemPartitionTableCreator
 import com.github.mjdev.libaums.partition.mbr.MasterBootRecordCreator
+import java.io.IOException
+import java.util.*
 
 /**
  * Helper class to create different supported [PartitionTable]s.

@@ -9,23 +9,31 @@ import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 import org.xenei.junit.contract.Contract;
 import org.xenei.junit.contract.ContractTest;
 import org.xenei.junit.contract.IProducer;
 
-import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Created by magnusja on 03/08/17.
@@ -58,6 +66,31 @@ public class UsbFileTest {
         fs = pair.getLeft();
         root = fs.getRootDirectory();
         expectedValues = pair.getRight();
+    }
+
+    @ContractTest
+    public void testSingleFileReferenceSearch() throws IOException {
+        for (JsonValue value : expectedValues.get("search").asArray()) {
+            String path = value.asString();
+            assertSame(root.search(path), root.search(path));
+        }
+    }
+
+    @ContractTest
+    public void testSingleFileReferenceCreate() throws IOException {
+        assertSame(root.createDirectory("ref_test"), root.search("ref_test"));
+        assertSame(root.createFile("ref_test.txt"), root.search("ref_test.txt"));
+
+        UsbFile file = root.createDirectory("test_single_ref").createDirectory("sub").createFile("file.txt");
+        assertSame(file, root.search("test_single_ref/sub/file.txt"));
+        assertSame(file.getParent(), root.search("/test_single_ref/sub/"));
+        assertSame(file.getParent().getParent(), root.search("test_single_ref/"));
+
+        newInstance();
+
+        assertNotSame(file, root.search("test_single_ref/sub/file.txt"));
+        assertNotSame(file.getParent(), root.search("/test_single_ref/sub/"));
+        assertNotSame(file.getParent().getParent(), root.search("test_single_ref/"));
     }
 
     @ContractTest
@@ -429,6 +462,32 @@ public class UsbFileTest {
     }
 
     @ContractTest
+    public void writeWithLength() throws Exception {
+
+        int numberOfFiles = root.listFiles().length;
+
+        URL bigFileUrl = new URL(expectedValues.get("bigFileToWrite").asString());
+
+        UsbFile bigFileLargeBuffer = root.createFile("bigwritetestlargebuffer");
+        bigFileLargeBuffer.setLength(29876);
+        copyLarge(bigFileUrl.openStream(),
+                new UsbFileOutputStream(bigFileLargeBuffer), new byte[7 * 32768]);
+
+
+        assertTrue(IOUtils.contentEquals(bigFileUrl.openStream(), new UsbFileInputStream(bigFileLargeBuffer)));
+
+        newInstance();
+
+        UsbFile bigFile = root.search("bigwritetestlargebuffer");
+
+        assertEquals(bigFileLargeBuffer.getLength(), bigFile.getLength());
+
+        assertTrue(IOUtils.contentEquals(bigFileUrl.openStream(), new UsbFileInputStream(bigFile)));
+
+        assertEquals(numberOfFiles + 1, root.listFiles().length);
+    }
+
+    @ContractTest
     public void flush() throws Exception {
         // TODO
     }
@@ -708,7 +767,43 @@ public class UsbFileTest {
         checkEqualsRecursive(root);
     }
 
+    @ContractTest
+    public void createLotsOfFiles() throws IOException {
+        UsbFile dir = root.createDirectory("test_lots_of_files");
+        List<String> nameList = new ArrayList<>();
 
+        for(int i = 0; i < 600; i++) {
+            String name = String.format("IMG_09082016_%06d", i);
+            nameList.add(name);
+            dir.createFile(name);
+        }
+        assertEquals(nameList.size(), dir.list().length);
+        assertArrayEquals(nameList.toArray(new String[0]), dir.list());
+
+        for(int j = 0; j < 12; j++) {
+            dir = root.createDirectory("test_lots_of_files_" + j);
+
+            for(int i = 0; i < 600; i++) {
+                String name = String.format("IMG_09082016_%06d", i);
+                dir.createFile(name);
+            }
+            assertEquals(nameList.size(), dir.list().length);
+            assertArrayEquals(nameList.toArray(new String[0]), dir.list());
+        }
+
+        newInstance();
+
+        dir = root.search("test_lots_of_files");
+
+        assertEquals(nameList.size(), dir.list().length);
+        assertArrayEquals(nameList.toArray(new String[0]), dir.list());
+
+        for(int j = 0; j < 12; j++) {
+            dir = root.search("test_lots_of_files_" + j);
+            assertEquals(nameList.size(), dir.list().length);
+            assertArrayEquals(nameList.toArray(new String[0]), dir.list());
+        }
+    }
 
     @ContractTest
     public void testIssue187() throws IOException {
@@ -746,6 +841,81 @@ public class UsbFileTest {
         InputStream inputStream1 = UsbFileStreamFactory.createBufferedInputStream(srcPtr, fs);
         InputStream inputStream2  = UsbFileStreamFactory.createBufferedInputStream(dstPtr, fs);
         assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+    }
+
+    @ContractTest
+    public void testIssue215() throws IOException {
+        
+        UsbFile file1b1 = getFile(root, "Folder1a/Folder1b/File1b1.txt");
+        UsbFile file1b2 = getFile(root, "Folder1a/Folder1b/File1b2.txt");
+        UsbFile file1b3 = getFile(root, "Folder1a/Folder1b/File1b3.txt");
+        UsbFile file2a = getFile(root, "Folder2a/File2a.txt");
+        UsbFile file1 = getFile(root, "File1.txt");
+
+        OutputStream outputStream = new UsbFileOutputStream(file1b1);
+        outputStream.write(file1b1.getName().getBytes());
+        outputStream.close();
+        outputStream = new UsbFileOutputStream(file1b2);
+        outputStream.write(file1b2.getName().getBytes());
+        outputStream.close();
+        outputStream = new UsbFileOutputStream(file1b3);
+        outputStream.write(file1b3.getName().getBytes());
+        outputStream.close();
+        outputStream = new UsbFileOutputStream(file2a);
+        outputStream.write(file2a.getName().getBytes());
+        outputStream.close();
+        outputStream = new UsbFileOutputStream(file1);
+        outputStream.write(file1.getName().getBytes());
+        outputStream.close();
+
+        assertSame(file1b1.getParent(), file1b2.getParent());
+        assertSame(file1b1.getParent(), file1b2.getParent());
+
+        assertNotNull(root.search("Folder1a/Folder1b/File1b1.txt"));
+        assertNotNull(root.search("Folder1a/Folder1b/File1b2.txt"));
+        assertNotNull(root.search("Folder1a/Folder1b/File1b3.txt"));
+
+        assertTrue(IOUtils.contentEquals(new UsbFileInputStream(root.search("Folder1a/Folder1b/File1b3.txt")),
+                new ByteArrayInputStream("File1b3.txt".getBytes(StandardCharsets.UTF_8))));
+
+        assertTrue(IOUtils.contentEquals(new UsbFileInputStream(root.search("Folder1a/Folder1b/File1b1.txt")),
+                new ByteArrayInputStream("File1b1.txt".getBytes(StandardCharsets.UTF_8))));
+
+        assertTrue(IOUtils.contentEquals(new UsbFileInputStream(root.search("Folder1a/Folder1b/File1b2.txt")),
+                new ByteArrayInputStream("File1b2.txt".getBytes(StandardCharsets.UTF_8))));
+
+        newInstance();
+
+        assertNotNull(root.search("Folder1a/Folder1b/File1b1.txt"));
+        assertNotNull(root.search("Folder1a/Folder1b/File1b2.txt"));
+        assertNotNull(root.search("Folder1a/Folder1b/File1b3.txt"));
+
+        assertTrue(IOUtils.contentEquals(new UsbFileInputStream(root.search("Folder1a/Folder1b/File1b1.txt")),
+                new ByteArrayInputStream("File1b1.txt".getBytes(StandardCharsets.UTF_8))));
+
+        assertTrue(IOUtils.contentEquals(new UsbFileInputStream(root.search("Folder1a/Folder1b/File1b2.txt")),
+                new ByteArrayInputStream("File1b2.txt".getBytes(StandardCharsets.UTF_8))));
+
+        assertTrue(IOUtils.contentEquals(new UsbFileInputStream(root.search("Folder1a/Folder1b/File1b3.txt")),
+                new ByteArrayInputStream("File1b3.txt".getBytes(StandardCharsets.UTF_8))));
+    }
+    
+    private static UsbFile getFile(UsbFile root, String path) throws IOException {
+        String[] items = path.split("/");
+
+        UsbFile child = root;
+        for (int i=0; i<items.length; ++i) {
+            UsbFile next = child.search(items[i]);
+            if (next == null) {
+                for (; i < items.length - 1; ++i)
+                    child = child.createDirectory(items[i]);
+                child = child.createFile(items[i++]);
+            } else {
+                child = next;
+            }
+        }
+
+        return child;
     }
 
 }
